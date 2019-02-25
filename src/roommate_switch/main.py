@@ -34,7 +34,7 @@ class RoommateSwitch:
         for a in mw.form.menubar.actions():
             if '&Study' == a.text():
                 menu=a.menu()
-                # menu.addSeparator()
+                menu.addSeparator()
                 break
         if not menu:
             menu=mw.form.menubar.addMenu('&Study')
