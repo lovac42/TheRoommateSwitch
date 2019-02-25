@@ -1,2 +1,1 @@
-# TheRoommateSwitch
-AnkiAddon: Swap QA
+# Roommate Switch: Swap QA
