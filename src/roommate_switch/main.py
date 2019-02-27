@@ -7,7 +7,7 @@
 import aqt
 from aqt.qt import *
 from aqt import mw
-from aqt.utils import tooltip
+from aqt.utils import tooltip, showInfo
 from anki.utils import intTime, ids2str
 from anki.hooks import wrap, addHook
 from .const import *
@@ -16,12 +16,18 @@ from .config import *
 
 class RoommateSwitch:
     loaded=False
-    card=None
+    lastId=None
 
     def __init__(self):
         self.conf=Config(ADDON_NAME)
         addHook(ADDON_NAME+".configLoaded", self.onConfigLoaded)
-        addHook('showAnswer', self.onShowAnswer)
+        addHook(ADDON_NAME+".swap", self.swap)
+        addHook('showQuestion', self.onShowQuestion)
+
+
+    def onShowQuestion(self):
+        self.lastId=None #clear
+
 
     def onConfigLoaded(self):
         if not self.loaded:
@@ -34,7 +40,7 @@ class RoommateSwitch:
         for a in mw.form.menubar.actions():
             if '&Study' == a.text():
                 menu=a.menu()
-                menu.addSeparator()
+                # menu.addSeparator()
                 break
         if not menu:
             menu=mw.form.menubar.addMenu('&Study')
@@ -58,21 +64,18 @@ order by id""", card.nid, card.id)
 
 
     def swap(self):
-        if mw.state!='review':
-            return
+        if mw.state!='review': return
         cid=self.getSibling(mw.reviewer.card)
         if cid:
-            self.card=mw.col.getCard(cid)
-            mw.reviewer.cardQueue.append(self.card)
+            if cid==self.lastId:
+                showInfo("No double dipping!")
+                return
+            self.lastId=cid
+            card=mw.col.getCard(cid)
+            card.queue=0 #not flushed, intentional
+            mw.reviewer.cardQueue.append(card)
             tooltip(_("Awaiting Sibling"),1500)
 
-
-    def onShowAnswer(self):
-        "If user leaves reviewer, sibling is left unchanged"
-        if self.card and self.card.id==mw.reviewer.card.id:
-            self.card.queue=0
-            self.card.flushSched()
-            self.card=None
 
 
 rsw=RoommateSwitch()
